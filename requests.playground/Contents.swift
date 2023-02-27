@@ -34,11 +34,13 @@ final class AsteroidsByNASA {
                         } else {
                             print(" * <NASA> RESULT DECODING ERROR: VALUES NOT FOUND")
                         }
-                        requestGroup.leave()
                     }
                 } catch let serializeError {
                     print(" * <NASA> RESULT DECODING ERROR: \(serializeError.localizedDescription)")
                 }
+                
+                requestGroup.wait(timeout: .now() + 1.5)
+                requestGroup.leave()
             }
         }).resume()
     }
@@ -105,7 +107,12 @@ final class MarvelComics {
                 
                 do {
                     let decoded = try decoder.decode(MarvelData.self, from: result)
-                    print(" * <MARVEL> RESULT: Founded \(decoded.data.results.count) characters! Here some examples: \(self.createCharactersList(decoded))")
+                    if decoded.data.results.count > 0 {
+                        print(" * <MARVEL> RESULT: Founded \(decoded.data.results.count) characters! Here some examples: \(self.createCharactersList(decoded))")
+                    } else {
+                        print(" * <MARVEL> RESULT: Characters with name '\(nameStartsWith)' not founded!")
+                    }
+                   
                 } catch let decodingError {
                     print(" * <MARVEL> RESULT DECODING ERROR: \(decodingError.localizedDescription)")
                 }
