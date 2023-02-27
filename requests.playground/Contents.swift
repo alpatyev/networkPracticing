@@ -8,15 +8,17 @@ let requestGroup = DispatchGroup()
 // MARK: - Task 1
 
 final class AsteroidsByNASA {
+    
+    static let apiKey = "GmAVhaVjomPSpV89qdgfaVvmnQhCRsn8VrhUVexa"
 
-    static func requestCount(urlString: String = AsteroidsByNASA.createTodayURLString()) {
+    static func requestCount() {
         requestGroup.enter()
         
-        guard let url = URL(string: urlString) else {
+        guard let url = createTodayURL() else {
             print("\n * <NASA> INVALID URL STRING")
             return
         }
-        print("\n * <NASA> REQUESTING: \(urlString.prefix(29))...")
+        print("\n * <NASA> REQUESTING: \(url.absoluteString.prefix(29))...")
         
         URLSession.shared.dataTask(with: url, completionHandler: { data, response, error in
             if let requestError = error {
@@ -31,7 +33,7 @@ final class AsteroidsByNASA {
                 do {
                     if let dictionary = try JSONSerialization.jsonObject(with: result, options: []) as? [String: Any] {
                         if let count = dictionary["element_count"] as? Int {
-                            print(" * <NASA> RESULT: Today \(Date().string(with: "yyyy-MM-dd")) we have \(count) asteroids around Earth.")
+                            print(" * <NASA> RESULT: Today we have \(count) asteroids around Earth.")
                         } else {
                             print(" * <NASA> RESULT DECODING ERROR: VALUES NOT FOUND")
                         }
@@ -48,12 +50,16 @@ final class AsteroidsByNASA {
         }).resume()
     }
     
-    static func createTodayURLString() -> String {
-        let base = "https://api.nasa.gov/neo/rest/v1/feed?"
+    static func createTodayURL() -> URL? {
         let todayString = Date().string(with: "yyyy-MM-dd")
-        let todayInterval = "start_date=\(todayString)&end_date=\(todayString)"
-        let apiKey = "&api_key=GmAVhaVjomPSpV89qdgfaVvmnQhCRsn8VrhUVexa"
-        return base + todayInterval + apiKey
+        var urlBuilder = URLComponents()
+        urlBuilder.scheme = "https"
+        urlBuilder.host = "api.nasa.gov"
+        urlBuilder.path = "/neo/rest/v1/feed"
+        urlBuilder.queryItems = [URLQueryItem(name: "start_date", value: todayString),
+                                 URLQueryItem(name: "end_date", value: todayString),
+                                 URLQueryItem(name: "api_key", value: apiKey)]
+        return urlBuilder.url
     }
 }
 
@@ -63,34 +69,36 @@ AsteroidsByNASA.requestCount()
 
 final class MarvelComics {
     
-    // MARK: - Decoding keys
+    // MARK: - Time data
     
     private let timeStamp = Date().string(with: "yyyy.MM.dd")
-    private let publicKey: String
-    private let privateKey: String
-    private let baseURL: String
     
-    // MARK: - Common init
+    // MARK: - Api keys
     
-    init(publicKey: String = "cf84e95c6735b5f2cebe6583497d937d",
-         privateKey: String = "e62bc278ee244cf43225a6279cd0895ebf5c97d2",
-         baseURL: String = "https://gateway.marvel.com:443/v1/public/characters?") {
-        self.publicKey = publicKey
-        self.privateKey = privateKey
-        self.baseURL = baseURL
-    }
+    private let publicKey = "cf84e95c6735b5f2cebe6583497d937d"
+    private let privateKey = "e62bc278ee244cf43225a6279cd0895ebf5c97d2"
+    
+    // MARK: - URLComponents
+    
+    private lazy var urlBuilder: URLComponents = {
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "gateway.marvel.com"
+        components.port = 443
+        components.path = "/v1/public/characters"
+        return components
+    }()
     
     // MARK: - Main method
         
     public func requestForCharacter(_ nameStartsWith: String) {
         requestGroup.wait()
         
-        let urlString = generateURL(nameStartsWith)
-        guard let url = URL(string: urlString) else {
+        guard let url = generateURL(nameStartsWith) else {
             print("\n * <MARVEL> INVALID URL STRING")
             return
         }
-        print("\n * <MARVEL> REQUESTING: \(urlString.prefix(26))...")
+        print("\n * <MARVEL> REQUESTING: \(url.absoluteString.prefix(26))...")
         
         URLSession.shared.dataTask(with: url, completionHandler: { data, response, error in
             if let requestError = error {
@@ -123,12 +131,12 @@ final class MarvelComics {
     
     // MARK: - Private methods
     
-    private func generateURL(_ characterName: String) -> String {
-        let nameParameter = "nameStartsWith=" + characterName
-        let timeStampParameter = "&ts=" + timeStamp
-        let apiKeyParameter = "&apikey=" + publicKey
-        let hashParameter = "&hash=" + generateHash()
-        return baseURL + nameParameter + timeStampParameter + apiKeyParameter + hashParameter
+    private func generateURL(_ characterName: String) -> URL? {
+        urlBuilder.queryItems = [URLQueryItem(name: "nameStartsWith", value: characterName),
+                                 URLQueryItem(name: "ts", value: timeStamp),
+                                 URLQueryItem(name: "apikey", value: publicKey),
+                                 URLQueryItem(name: "hash", value: generateHash())]
+        return urlBuilder.url
     }
     
     private func generateHash() -> String {
@@ -166,3 +174,4 @@ final class MarvelComics {
 }
 
 MarvelComics().requestForCharacter("Spider-Man")
+
