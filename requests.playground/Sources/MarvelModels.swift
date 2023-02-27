@@ -1,11 +1,13 @@
 import Foundation
 
 // MARK: - Recieved type
+
 public struct MarvelData: Decodable {
     public let data: CharactersData
 }
 
 // MARK: - All founded characters
+
 public struct CharactersData: Decodable {
     public let results: [MarvelCharacter]
 }
@@ -21,7 +23,6 @@ public struct MarvelCharacter: Decodable {
 public struct ComicsData: Decodable {
     public let available: Int
     public let items: [Comics]
-    
 }
 
 public struct Comics: Decodable {

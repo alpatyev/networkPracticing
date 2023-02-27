@@ -16,7 +16,7 @@ final class AsteroidsByNASA {
             print("\n * <NASA> INVALID URL STRING")
             return
         }
-        print("\n * <NASA> REQUESTING: \(urlString.prefix(30))...")
+        print("\n * <NASA> REQUESTING: \(urlString.prefix(29))...")
         
         URLSession.shared.dataTask(with: url, completionHandler: { data, response, error in
             if let requestError = error {
@@ -26,10 +26,11 @@ final class AsteroidsByNASA {
             if let response = response as? HTTPURLResponse {
                 print(" * <NASA> RESPONSE CODE: \(response.statusCode)")
             }
+            
             if let result = data {
                 do {
-                    if let json = try JSONSerialization.jsonObject(with: result, options: []) as? [String: Any] {
-                        if let count = json["element_count"] as? Int {
+                    if let dictionary = try JSONSerialization.jsonObject(with: result, options: []) as? [String: Any] {
+                        if let count = dictionary["element_count"] as? Int {
                             print(" * <NASA> RESULT: Today \(Date().string(with: "yyyy-MM-dd")) we have \(count) asteroids around Earth.")
                         } else {
                             print(" * <NASA> RESULT DECODING ERROR: VALUES NOT FOUND")
@@ -41,24 +42,22 @@ final class AsteroidsByNASA {
                 
                 requestGroup.wait(timeout: .now() + 1.5)
                 requestGroup.leave()
+            } else {
+                print(" * <NASA> RESULT NOT RECIEVED")
             }
         }).resume()
     }
     
     static func createTodayURLString() -> String {
         let base = "https://api.nasa.gov/neo/rest/v1/feed?"
-        
         let todayString = Date().string(with: "yyyy-MM-dd")
         let todayInterval = "start_date=\(todayString)&end_date=\(todayString)"
-        
         let apiKey = "&api_key=GmAVhaVjomPSpV89qdgfaVvmnQhCRsn8VrhUVexa"
-        
         return base + todayInterval + apiKey
     }
 }
 
 AsteroidsByNASA.requestCount()
-
 
 // MARK: - Task 2
 
@@ -117,7 +116,7 @@ final class MarvelComics {
                     print(" * <MARVEL> RESULT DECODING ERROR: \(decodingError.localizedDescription)")
                 }
             } else {
-                print("no result")
+                print(" * <MARVEL> RESULT NOT RECIEVED")
             }
         }).resume()
     }
@@ -143,6 +142,7 @@ final class MarvelComics {
         let paging = "\n  "
         var number = 0
         var lines = String()
+        
         for character in marvelData.data.results {
             number += 1
             lines += (paging + "\(number). \(character.name)")
